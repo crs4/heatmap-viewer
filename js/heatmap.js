@@ -6,22 +6,16 @@ window.onload = function() {
   });
   var overlay = this.viewer.paperjsOverlay();
 
-  var defaultOpacity = 0.5;
+  var defaultOpacity = 1;
   opacityController = $('#opacity')[0];
   opacityController.value = defaultOpacity*100;
-  
-
-  var layer = new paper.Layer();
-  layer.activate();
-  layer.opacity = defaultOpacity;
-
-
 
   $('#opacity').on('input', function(){
-    layer.opacity = $(this).val()/100;
+    var opacity = $(this).val()/100;
+    paper.project.activeLayer.children.forEach(function(e) {e.opacity = opacity;});
      paper.project.view.update();
   });
-
+//
   $.ajax({
     'url': '/features/test.json',
     datatype: 'json'
