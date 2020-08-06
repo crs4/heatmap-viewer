@@ -1,8 +1,12 @@
 window.onload = function() {
+
+  var url = new URL(window.location.href);
+  var uriImage = url.searchParams.get("image");
+
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
       prefixUrl: "/openseadragon/images/",
-      tileSources: "http://mobydick.crs4.it/ome_seadragon/deepzoom/get/54.dzi"
+      tileSources: "http://mobydick.crs4.it/ome_seadragon/deepzoom/get/" + uriImage + ".dzi"
   });
   var overlay = this.viewer.paperjsOverlay();
 
@@ -17,7 +21,7 @@ window.onload = function() {
   });
 //
   $.ajax({
-    'url': '/features/test.json',
+    'url': '/features/cancer_' + uriImage + '.json',
     datatype: 'json'
   })
     .done(function(patches){
