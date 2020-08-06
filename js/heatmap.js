@@ -8,7 +8,12 @@ window.onload = function() {
       prefixUrl: "/openseadragon/images/",
       tileSources: "http://mobydick.crs4.it/ome_seadragon/deepzoom/get/" + uriImage + ".dzi"
   });
+
   var overlay = this.viewer.paperjsOverlay();
+  viewer.addHandler('resize', function (viewer) {
+    overlay.resize();
+  })
+
 
   var defaultOpacity = 1;
   opacityController = $('#opacity')[0];
