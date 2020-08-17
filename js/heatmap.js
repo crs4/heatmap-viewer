@@ -48,6 +48,10 @@ window.onload = function() {
 
   var url = new URL(window.location.href);
   var uriImage = url.searchParams.get("image");
+  var threshold = url.searchParams.get("th");
+  if (threshold == null) {
+    threshold = 0.7;
+  }
 
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
@@ -78,7 +82,6 @@ window.onload = function() {
       var size = data.patch_size;
       data.predictions.forEach(function(patch){
         var prediction = patch[2];
-        threshold = 0.5;
         if (prediction > threshold) {
           var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
           var path = new paper.Path.Rectangle(heat);
