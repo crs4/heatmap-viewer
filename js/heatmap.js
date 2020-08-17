@@ -92,7 +92,7 @@ window.onload = function() {
      paper.project.view.update();
   });
 
-  var colorMap = summer;
+  var colorMap = hot;
   drawColormap('colorbar', colorMap);
 
   $.ajax({
