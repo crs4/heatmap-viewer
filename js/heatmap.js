@@ -104,6 +104,8 @@ window.onload = function() {
       data.predictions.forEach(function(patch){
         var prediction = patch[2];
         if (prediction > threshold) {
+          // rescaling
+          prediction = (prediction - threshold)/(1 - threshold);
           var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
           var path = new paper.Path.Rectangle(heat);
           var color = interpolateLinearly(prediction, colorMap);
