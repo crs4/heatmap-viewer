@@ -30,12 +30,12 @@ window.onload = function() {
     datatype: 'json'
   })
     .done(function(patches){
-      console.log(patches[0]);
-      console.log(patches[0].size[0]);
-      patches.forEach(function(patch){
-        var cancer_percentage = patch.data.cancer_percentage;
-        if (cancer_percentage > 0) {
-          var heat = new paper.Rectangle(patch.x, patch.y, patch.size[0], patch.size[1]);
+      size = patches.patch_size;
+      patches.predictions.forEach(function(patch){
+        var prediction = patch[2];
+        console.log(prediction);
+        if (prediction > 0) {
+          var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
           var path = new paper.Path.Rectangle(heat);
           path.fillColor = new paper.Color(cancer_percentage*255, 0, 0);
           // path.selected = true;
