@@ -92,7 +92,7 @@ window.onload = function() {
      paper.project.view.update();
   });
 
-  var colorMap = hot;
+  var colorMap = YlOrRd;
   drawColormap('colorbar', colorMap);
 
   $.ajax({
