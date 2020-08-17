@@ -1,5 +1,5 @@
 //from https://github.com/timothygebhard/js-colormaps/blob/master/overview.html
-
+//*******************************
 function enforceBounds(x) {
     if (x < 0) {
         return 0;
@@ -43,6 +43,24 @@ function interpolateLinearly(x, values) {
 }
 
 
+ function drawColormap(CanvasID, colormap) {
+
+    var c = document.getElementById(CanvasID);
+    var ctx = c.getContext("2d");
+    
+    var pixels = c.width;
+    for (i = 0; i <= pixels; i++) {
+        var color = interpolateLinearly(i/pixels, colormap);
+        r = Math.round(255*color[0]);
+        g = Math.round(255*color[1]);
+        b = Math.round(255*color[2]);
+        ctx.fillStyle = 'rgb('+r+', '+g+', '+b+')';
+        ctx.fillRect(i, 0, 1, 20);
+    }
+}
+
+//**************************
+
 
 window.onload = function() {
 
@@ -73,7 +91,10 @@ window.onload = function() {
     paper.project.activeLayer.children.forEach(function(e) {e.opacity = opacity;});
      paper.project.view.update();
   });
-//
+
+  var colorMap = summer;
+  drawColormap('colorbar', colorMap);
+
   $.ajax({
     'url': '/features/cancer_' + uriImage + '.json',
     datatype: 'json'
@@ -85,7 +106,7 @@ window.onload = function() {
         if (prediction > threshold) {
           var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
           var path = new paper.Path.Rectangle(heat);
-          var color = interpolateLinearly(prediction, summer);
+          var color = interpolateLinearly(prediction, colorMap);
           path.fillColor = new paper.Color(color);
         }
 
