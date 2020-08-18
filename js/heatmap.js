@@ -66,7 +66,9 @@ window.onload = function() {
 
   var url = new URL(window.location.href);
   var uriImage = url.searchParams.get("image");
+  var heatmap = url.searchParams.get("heatmap");
   var threshold = url.searchParams.get("th");
+
   if (threshold == null) {
     threshold = 0.7;
   }
@@ -74,7 +76,7 @@ window.onload = function() {
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
       prefixUrl: "/openseadragon/images/",
-      tileSources: "http://mobydick.crs4.it/ome_seadragon/deepzoom/get/" + uriImage + ".dzi"
+      tileSources: uriImage
   });
 
   var overlay = this.viewer.paperjsOverlay();
@@ -96,7 +98,7 @@ window.onload = function() {
   drawColormap('colorbar', colorMap);
 
   $.ajax({
-    'url': '/features/cancer_' + uriImage + '.json',
+    'url': '/features/' + heatmap,
     datatype: 'json'
   })
     .done(function(data){
