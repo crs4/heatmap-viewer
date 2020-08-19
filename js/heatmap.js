@@ -72,6 +72,7 @@ window.onload = function() {
   if (threshold == null) {
     threshold = 0.7;
   }
+  $("#low-colorbar")[0].innerText = threshold;
 
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
