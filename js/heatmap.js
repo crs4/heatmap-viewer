@@ -87,7 +87,9 @@ function drawCancer(data, threshold) {
     }
 
   });
+  paper.project.view.update();
 }
+
 window.onload = function() {
 
   var patches;
