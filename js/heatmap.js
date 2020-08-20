@@ -64,20 +64,29 @@ function interpolateLinearly(x, values) {
 var colorMap = YlOrRd;
 
 function drawCancer(data, threshold) {
-    paper.project.activeLayer.removeChildren();
-    var size = data.patch_size;
-    data.predictions.forEach(function(patch){
-      var prediction = patch[2];
-      if (prediction > threshold) {
-        // rescaling
-        prediction = (prediction - threshold)/(1 - threshold);
+  var size = data.patch_size;
+  data.predictions.forEach(function(patch){
+    var prediction = patch[2];
+    if (prediction > threshold) {
+      // rescaling
+      prediction = (prediction - threshold)/(1 - threshold);
+      if (patch.length < 4) { // Rectangle does not exists
         var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
         var path = new paper.Path.Rectangle(heat);
-        var color = interpolateLinearly(prediction, colorMap);
-        path.fillColor = new paper.Color(color);
+        patch.push(path);
       }
+      else {
+        var path = patch[3];
+      }
+      var color = interpolateLinearly(prediction, colorMap);
+      path.fillColor = new paper.Color(color);
+      path.visible = true;
+    }
+    else if (patch.length == 4) { // Rectangle already exists
+      patch[3].visible = false;
+    }
 
-    });
+  });
 }
 window.onload = function() {
 
@@ -115,14 +124,17 @@ window.onload = function() {
      paper.project.view.update();
   });
 
-  $('#threshold').on('input', function(){
+  $('#threshold').on('mouseup', function(){
+    var th = $(this).val()/100;
+    drawCancer(patches, th); 
+    $("#low-colorbar")[0].innerText = th;
+  });
+
+$('#threshold').on('input', function(){
     var th = $(this).val()/100;
     $("#th-value")[0].innerText = th;
-    drawCancer(patches, th); 
-  $("#low-colorbar")[0].innerText = th;
-    /* paper.project.activeLayer.children.forEach(function(e) {e.opacity = opacity;});
-     *  paper.project.view.update(); */
   });
+
 
 
   drawColormap('colorbar', colorMap);
