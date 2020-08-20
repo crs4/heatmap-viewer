@@ -91,6 +91,8 @@ window.onload = function() {
     threshold = 0.7;
   }
   $("#low-colorbar")[0].innerText = threshold;
+  $("#th-value")[0].innerText = threshold;
+  $("#threshold")[0].value = threshold*100;
 
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
