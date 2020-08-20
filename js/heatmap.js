@@ -61,9 +61,27 @@ function interpolateLinearly(x, values) {
 
 //**************************
 
+var colorMap = YlOrRd;
 
+function drawCancer(data, threshold) {
+    paper.project.activeLayer.removeChildren();
+    var size = data.patch_size;
+    data.predictions.forEach(function(patch){
+      var prediction = patch[2];
+      if (prediction > threshold) {
+        // rescaling
+        prediction = (prediction - threshold)/(1 - threshold);
+        var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
+        var path = new paper.Path.Rectangle(heat);
+        var color = interpolateLinearly(prediction, colorMap);
+        path.fillColor = new paper.Color(color);
+      }
+
+    });
+}
 window.onload = function() {
 
+  var patches;
   var url = new URL(window.location.href);
   var uriImage = url.searchParams.get("image");
   var heatmap = url.searchParams.get("heatmap");
@@ -95,7 +113,16 @@ window.onload = function() {
      paper.project.view.update();
   });
 
-  var colorMap = YlOrRd;
+  $('#threshold').on('input', function(){
+    var th = $(this).val()/100;
+    $("#th-value")[0].innerText = th;
+    drawCancer(patches, th); 
+  $("#low-colorbar")[0].innerText = th;
+    /* paper.project.activeLayer.children.forEach(function(e) {e.opacity = opacity;});
+     *  paper.project.view.update(); */
+  });
+
+
   drawColormap('colorbar', colorMap);
 
   $.ajax({
@@ -103,20 +130,8 @@ window.onload = function() {
     datatype: 'json'
   })
     .done(function(data){
-      var size = data.patch_size;
-      data.predictions.forEach(function(patch){
-        var prediction = patch[2];
-        if (prediction > threshold) {
-          // rescaling
-          prediction = (prediction - threshold)/(1 - threshold);
-          var heat = new paper.Rectangle(patch[1], patch[0], size[0], size[1]);
-          var path = new paper.Path.Rectangle(heat);
-          var color = interpolateLinearly(prediction, colorMap);
-          path.fillColor = new paper.Color(color);
-        }
-
-      });
-
+      patches = data;
+      drawCancer(patches, threshold); 
 
     }
 
