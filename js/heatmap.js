@@ -62,9 +62,11 @@ function interpolateLinearly(x, values) {
 //**************************
 
 var colorMap = YlOrRd;
+var patchData;
 
-function drawCancer(data, threshold) {
-  var size = data.patch_size;
+function drawCancerLegacy(data, threshold) {
+  // var size = data.patch_size;
+  var size = [1024, 1024];
   data.predictions.forEach(function(patch){
     var prediction = patch[2];
     if (prediction > threshold) {
@@ -89,6 +91,42 @@ function drawCancer(data, threshold) {
   });
   paper.project.view.update();
 }
+
+
+function drawCancer(data, threshold) {
+  patchData = data;
+  var size = [
+    data.patch_size[0]*data.downsample_factor, 
+    data.patch_size[1]*data.downsample_factor
+  ];
+  data.features.forEach(function(patch){
+    var prediction = patch.cancer;
+    if (prediction > threshold) {
+      // rescaling
+      prediction = (prediction - threshold)/(1 - threshold);
+      if (! patch.hasOwnProperty('rect')) { // Rectangle does not exists
+        var x = patch.x*data.downsample_factor;
+        var y = patch.y*data.downsample_factor;
+        var heat = new paper.Rectangle(x, y, size[0], size[1]);
+        var path = new paper.Path.Rectangle(heat);
+        patch['rect'] = path;
+      }
+      else {
+        var path = patch.rect;
+      }
+      var color = interpolateLinearly(prediction, colorMap);
+      path.fillColor = new paper.Color(color);
+      path.visible = true;
+    }
+    else if (patch.hasOwnProperty('rect')) { // Rectangle already exists
+      patch.rect.visible = false;
+    }
+
+  });
+  paper.project.view.update();
+}
+
+
 
 window.onload = function() {
 
