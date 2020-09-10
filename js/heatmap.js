@@ -1,3 +1,8 @@
+var colorMap = YlOrRd;
+var patchData;
+var slideDimensions; 
+var userPatches = {};
+
 //from https://github.com/timothygebhard/js-colormaps/blob/master/overview.html
 //*******************************
 function enforceBounds(x) {
@@ -61,8 +66,6 @@ function interpolateLinearly(x, values) {
 
 //**************************
 
-var colorMap = YlOrRd;
-var patchData;
 
 function drawCancerLegacy(data, threshold) {
   // var size = data.patch_size;
@@ -92,6 +95,24 @@ function drawCancerLegacy(data, threshold) {
   paper.project.view.update();
 }
 
+function drawRectangle(x, y, sizeX, sizeY, color) {
+  var rect = new paper.Rectangle(x, y, sizeX, sizeY);
+  var path = new paper.Path.Rectangle(rect);
+  path.fillColor = new paper.Color(color);
+  paper.project.view.update();
+  return path;
+}
+
+function convertToSlideCoordinates(x, y) {
+  return paper.view.viewToProject(new paper.Point(x, y));
+};
+
+var PATCH_SIZE = 1000;
+function getPatch(x, y) {
+  var patchX = Math.floor(x / PATCH_SIZE) * PATCH_SIZE;
+  var patchY = Math.floor(y / PATCH_SIZE) * PATCH_SIZE;
+  return [patchX, patchY];
+};
 
 function drawCancer(data, threshold) {
   patchData = data;
@@ -150,6 +171,13 @@ window.onload = function() {
       tileSources: uriImage
   });
 
+  this.viewer.gestureSettingsMouse.clickToZoom = false;
+
+
+  viewer.addHandler('open', function() {
+    slideDimensions = viewer.world.getItemAt(0).source.dimensions;
+});
+
   var overlay = this.viewer.paperjsOverlay();
   viewer.addHandler('resize', function (viewer) {
     overlay.resize();
@@ -196,5 +224,26 @@ $('#threshold').on('input', function(){
     }
 
     );
+
+    new OpenSeadragon.MouseTracker({
+        element: viewer.canvas,
+      pressHandler: function(event){
+        var size = 1000;
+        var slidePoint = convertToSlideCoordinates(event.position.x, event.position.y);
+        var patchCoordinates = getPatch(slidePoint.x, slidePoint.y);
+        var key = "" + patchCoordinates[0] + ":" + patchCoordinates[1];
+        if (userPatches.hasOwnProperty(key)) {
+          userPatches[key].remove();
+          delete userPatches[key];
+          paper.view.update();
+        }
+        else {
+          var path = drawRectangle(patchCoordinates[0], patchCoordinates[1], PATCH_SIZE, PATCH_SIZE, 'red');
+          userPatches[key] = path;
+        }
+      },
+    }).setTracking(true);
+
+
 };
 
