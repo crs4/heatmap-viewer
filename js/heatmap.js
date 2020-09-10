@@ -135,6 +135,7 @@ window.onload = function() {
   var uriImage = url.searchParams.get("image");
   var heatmap = url.searchParams.get("heatmap");
   var threshold = url.searchParams.get("th");
+  var legacy = url.searchParams.get("legacy", false);
 
   if (threshold == null) {
     threshold = 0.7;
@@ -185,7 +186,12 @@ $('#threshold').on('input', function(){
   })
     .done(function(data){
       patches = data;
-      drawCancer(patches, threshold); 
+      if (legacy) {
+        drawCancerLegacy(patches, threshold); 
+      }
+      else {
+        drawCancer(patches, threshold); 
+      }
 
     }
 
