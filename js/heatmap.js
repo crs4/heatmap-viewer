@@ -66,6 +66,46 @@ function interpolateLinearly(x, values) {
 
 //**************************
 
+var pathHit, segmentHit;
+var hitOptions = {
+	segments: true,
+	stroke: true,
+	fill: true,
+	tolerance: 30
+};
+var pressHandler = function(event) {
+    pathHit = null;
+    var transformed_point = paper.view.viewToProject(new paper.Point(event.position.x, event.position.y));
+    var hitTestResult = paper.project.hitTest(transformed_point, hitOptions);
+    if (hitTestResult) {
+        console.log(hitTestResult.type);
+        pathHit = hitTestResult.item;
+        pathHit.selected = true;
+        if (hitTestResult.type == 'segment') {
+          segmentHit = hitTestResult.segment;
+        }
+    }
+};
+
+var dragHandler = function(event) {
+  var transformed_point1 = paper.view.viewToProject(new paper.Point(0,0));
+  var transformed_point2 = paper.view.viewToProject(new paper.Point(event.delta.x, event.delta.y));
+  window.viewer.setMouseNavEnabled(false);
+  if (segmentHit) {
+    segmentHit.point = new paper.Point(segmentHit.point.x + 10*event.delta.x, segmentHit.point.y + 10*event.delta.y);
+  }
+  else if(pathHit){
+    pathHit.position = pathHit.position.add(transformed_point2.subtract(transformed_point1));
+  }
+    paper.view.draw();
+};
+
+var dragEndHandler = function(event) {
+    window.viewer.setMouseNavEnabled(true);
+    segmentHit = null;
+    pathHit= null;
+};
+
 
 function drawCancerLegacy(data, threshold) {
   // var size = data.patch_size;
@@ -147,11 +187,29 @@ function drawCancer(data, threshold) {
   paper.project.view.update();
 }
 
+function drawPolygons(polygons){
+  polygons.forEach(function(polygon){
+    var path = new paper.Path(polygon);
+    path.strokeWidth = 100;
+    path.fillColor = 'red';
+    path.simplify();
+    path.flatten(1000);
+    // path.opacity = opacity;
+  });
 
+  paper.project.view.update();
+};
 
+// Only execute onMouseDrag when the mouse
+// has moved at least 10 points:
 window.onload = function() {
 
+  var path;
+  var tool = new paper.Tool();
+  tool.minDistance = 1000;
   var patches;
+  var opacity;
+
   var url = new URL(window.location.href);
   var uriImage = url.searchParams.get("image");
   var heatmap = url.searchParams.get("heatmap");
@@ -172,6 +230,8 @@ window.onload = function() {
   });
 
   this.viewer.gestureSettingsMouse.clickToZoom = false;
+  // this.viewer.setMouseNavEnabled(false);
+
 
 
   viewer.addHandler('open', function() {
@@ -188,7 +248,7 @@ window.onload = function() {
   opacityController.value = defaultOpacity*100;
 
   $('#opacity').on('input', function(){
-    var opacity = $(this).val()/100;
+    opacity = $(this).val()/100;
     paper.project.activeLayer.children.forEach(function(e) {e.opacity = opacity;});
      paper.project.view.update();
   });
@@ -213,37 +273,51 @@ $('#threshold').on('input', function(){
     datatype: 'json'
   })
     .done(function(data){
-      patches = data;
-      if (legacy) {
-        drawCancerLegacy(patches, threshold); 
+      // patches = data;
+      // if (legacy) {
+        // drawCancerLegacy(patches, threshold);
+      // }
+      // else {
+        // drawCancer(patches, threshold);
+      // }
+//
+      drawPolygons(data);
       }
-      else {
-        drawCancer(patches, threshold); 
-      }
-
-    }
-
     );
 
+    // new OpenSeadragon.MouseTracker({
+        // element: viewer.canvas,
+      // pressHandler: function(event){
+        // var point = convertToSlideCoordinates(event.position.x, event.position.y);
+        // path = new paper.Path();
+        // path.add(point);
+        // path.strokeWidth = 100;
+        // path.strokeColor = 'black';
+        // paper.project.view.update();
+//
+      // },
+      // dragHandler: function(event) {
+        // var point = convertToSlideCoordinates(event.position.x, event.position.y);
+        // path.add(point);
+        // paper.project.view.update();
+      // },
+      // releaseHandler: function(event){
+        // console.log('release');
+        // path.simplify();
+        // path.flatten(2000);
+        // path.fillColor = 'black';
+        // path.opacity = opacity;
+      // }
+    // }).setTracking(true);
+// };
+
     new OpenSeadragon.MouseTracker({
-        element: viewer.canvas,
-      pressHandler: function(event){
-        var size = 1000;
-        var slidePoint = convertToSlideCoordinates(event.position.x, event.position.y);
-        var patchCoordinates = getPatch(slidePoint.x, slidePoint.y);
-        var key = "" + patchCoordinates[0] + ":" + patchCoordinates[1];
-        if (userPatches.hasOwnProperty(key)) {
-          userPatches[key].remove();
-          delete userPatches[key];
-          paper.view.update();
-        }
-        else {
-          var path = drawRectangle(patchCoordinates[0], patchCoordinates[1], PATCH_SIZE, PATCH_SIZE, 'red');
-          userPatches[key] = path;
-        }
-      },
+      element: viewer.canvas,
+      pressHandler: pressHandler,
+      dragHandler: dragHandler,
+      dragEndHandler: dragEndHandler
     }).setTracking(true);
-
-
 };
+//
+
 
