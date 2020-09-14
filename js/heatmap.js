@@ -2,6 +2,7 @@ var colorMap = YlOrRd;
 var patchData;
 var slideDimensions; 
 var userPatches = {};
+var dragHandler;
 
 //from https://github.com/timothygebhard/js-colormaps/blob/master/overview.html
 //*******************************
@@ -73,39 +74,78 @@ var hitOptions = {
 	fill: true,
 	tolerance: 30
 };
-var pressHandler = function(event) {
-    pathHit = null;
-    var transformed_point = paper.view.viewToProject(new paper.Point(event.position.x, event.position.y));
-    var hitTestResult = paper.project.hitTest(transformed_point, hitOptions);
-    if (hitTestResult) {
-        console.log(hitTestResult.type);
-        pathHit = hitTestResult.item;
-        pathHit.selected = true;
-        if (hitTestResult.type == 'segment') {
-          segmentHit = hitTestResult.segment;
-        }
-    }
-};
 
-var dragHandler = function(event) {
-  var transformed_point1 = paper.view.viewToProject(new paper.Point(0,0));
-  var transformed_point2 = paper.view.viewToProject(new paper.Point(event.delta.x, event.delta.y));
-  window.viewer.setMouseNavEnabled(false);
-  if (segmentHit) {
-    segmentHit.point = new paper.Point(segmentHit.point.x + 10*event.delta.x, segmentHit.point.y + 10*event.delta.y);
-  }
-  else if(pathHit){
-    pathHit.position = pathHit.position.add(transformed_point2.subtract(transformed_point1));
-  }
-    paper.view.draw();
-};
 
-var dragEndHandler = function(event) {
+
+class DragHandler {
+  onDrag(event) {
+    window.viewer.setMouseNavEnabled(false);
+  }
+  onDragEnd(event){
     window.viewer.setMouseNavEnabled(true);
-    segmentHit = null;
-    pathHit= null;
+  }
+}
+
+class PathDrawingHandler extends DragHandler {
+	constructor(startX, startY) {
+    super();
+		this.path = new paper.Path();
+		var point = convertToSlideCoordinates(startX, startY);
+		this.path.add(point);
+		this.path.strokeWidth = 100;
+		this.path.strokeColor = 'red';
+		paper.project.view.update();
+	}
+  onDrag(event) {
+    super.onDrag(event);
+    var point = convertToSlideCoordinates(event.position.x, event.position.y);
+    this.path.add(point);
+    paper.project.view.update();
+  }
+
+  onDragEnd(event){
+    super.onDragEnd(event);
+    this.path.simplify();
+    this.path.flatten(1000);
+    this.path.closed = true;
+    this.path.fillColor = 'red';
+    this.path.opacity = opacity;
+    paper.project.view.update();
+  }
 };
 
+class PathMovingHandler extends DragHandler {
+  constructor(path){
+    super();
+    this.path = path;
+    this.path.selected = true;
+
+  }
+
+  onDrag(event) {
+    super.onDrag(event);
+    var origin = paper.view.viewToProject(new paper.Point(0,0));
+    var endPoint = paper.view.viewToProject(new paper.Point(event.delta.x, event.delta.y));
+    this.path.position = this.path.position.add(endPoint.subtract(origin));
+    paper.project.view.update();
+  }
+}
+
+class PathModifyingHandler extends DragHandler {
+  constructor(path, segment){
+    super();
+    this.path = path;
+    this.segment = segment;
+    this.path.selected = true;
+
+  }
+
+  onDrag(event) {
+    super.onDrag(event);
+    this.segment.point = new paper.Point(this.segment.point.x + 10*event.delta.x, this.segment.point.y + 10*event.delta.y);
+    paper.project.view.update();
+  }
+}
 
 function drawCancerLegacy(data, threshold) {
   // var size = data.patch_size;
@@ -259,7 +299,7 @@ window.onload = function() {
     $("#low-colorbar")[0].innerText = th;
   });
 
-$('#threshold').on('input', function(){
+  $('#threshold').on('input', function(){
     var th = $(this).val()/100;
     $("#th-value")[0].innerText = th;
   });
@@ -285,37 +325,36 @@ $('#threshold').on('input', function(){
       }
     );
 
-    // new OpenSeadragon.MouseTracker({
-        // element: viewer.canvas,
-      // pressHandler: function(event){
-        // var point = convertToSlideCoordinates(event.position.x, event.position.y);
-        // path = new paper.Path();
-        // path.add(point);
-        // path.strokeWidth = 100;
-        // path.strokeColor = 'black';
-        // paper.project.view.update();
-//
-      // },
-      // dragHandler: function(event) {
-        // var point = convertToSlideCoordinates(event.position.x, event.position.y);
-        // path.add(point);
-        // paper.project.view.update();
-      // },
-      // releaseHandler: function(event){
-        // console.log('release');
-        // path.simplify();
-        // path.flatten(2000);
-        // path.fillColor = 'black';
-        // path.opacity = opacity;
-      // }
-    // }).setTracking(true);
-// };
-
     new OpenSeadragon.MouseTracker({
       element: viewer.canvas,
-      pressHandler: pressHandler,
-      dragHandler: dragHandler,
-      dragEndHandler: dragEndHandler
+      pressHandler: function(event){
+        if ($("#draw-checkbox").is(":checked")) {
+          var transformed_point = paper.view.viewToProject(new paper.Point(event.position.x, event.position.y));
+          var hitTestResult = paper.project.hitTest(transformed_point, hitOptions);
+          if (hitTestResult) {
+              if (hitTestResult.type == 'segment') {
+                dragHandler = new PathModifyingHandler(hitTestResult.item, hitTestResult.segment);
+              }
+              else {
+                dragHandler = new PathMovingHandler(hitTestResult.item);
+              }
+          } else {
+              dragHandler = new PathDrawingHandler(event.position.x, event.position.y);
+          }
+        }
+      },
+      dragHandler: function(event) {
+        if (dragHandler) {
+
+        dragHandler.onDrag(event);
+        }
+      },
+      dragEndHandler: function(event) {
+        if (dragHandler) {
+          dragHandler.onDragEnd(event);
+          dragHandler = null;
+        }
+      }
     }).setTracking(true);
 };
 //
