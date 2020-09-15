@@ -1,7 +1,7 @@
 var colorMap = YlOrRd;
 var patchData;
 var slideDimensions; 
-var userPatches = {};
+var polygons = [];
 var dragHandler;
 
 //from https://github.com/timothygebhard/js-colormaps/blob/master/overview.html
@@ -93,7 +93,8 @@ class PathDrawingHandler extends DragHandler {
 		var point = convertToSlideCoordinates(startX, startY);
 		this.path.add(point);
 		this.path.strokeWidth = 100;
-		this.path.strokeColor = 'red';
+		this.path.strokeColor = 'blue';
+    polygons.push(this.path);
 		paper.project.view.update();
 	}
   onDrag(event) {
@@ -227,13 +228,14 @@ function drawCancer(data, threshold) {
   paper.project.view.update();
 }
 
-function drawPolygons(polygons){
-  polygons.forEach(function(polygon){
+function drawPolygons(data){
+  data.forEach(function(polygon){
     var path = new paper.Path(polygon);
     path.strokeWidth = 100;
     path.fillColor = 'red';
     path.simplify();
     path.flatten(1000);
+    polygons.push(path);
     // path.opacity = opacity;
   });
 
@@ -265,7 +267,7 @@ window.onload = function() {
 
   this.viewer = OpenSeadragon({
       id: "openseadragon1",
-      prefixUrl: "/openseadragon/images/",
+    prefixUrl: "/static/openseadragon/images/",
       tileSources: uriImage
   });
 
@@ -304,12 +306,27 @@ window.onload = function() {
     $("#th-value")[0].innerText = th;
   });
 
-
+  $('#save-polygon').click(function(){
+    data = []
+    polygons.forEach(function(polygon) {
+      segments = polygon.exportJSON({asString: false})[1].segments;
+      data.push(segments);
+    });
+    console.log(data);
+     $.ajax({
+        type: "POST",
+        url: '/polygons/' + heatmap,
+        dataType: 'json',
+        contentType:"application/json; charset=utf-8",
+        data: JSON.stringify(data)
+      })
+  
+  });
 
   drawColormap('colorbar', colorMap);
 
   $.ajax({
-    'url': '/features/' + heatmap,
+    'url': '/polygons/' + heatmap,
     datatype: 'json'
   })
     .done(function(data){
