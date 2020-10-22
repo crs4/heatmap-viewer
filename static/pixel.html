@@ -1,0 +1,86 @@
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="/static/js/lib/jquery-3.5.1.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+  </head>
+  <body>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="/static/js/lib/popper.min.js"</script>
+    <script src="/static/js/lib/bootstrap.min.js"></script>
+
+    <script src="/static/openseadragon/openseadragon.min.js"></script>
+    <script src="/static/js/lib/openseadragon-paperjs-overlay.js"></script>
+    <script src="/static/js/lib/paper-full.min.js"></script>
+    <script src="/static/js/lib/js-colormaps.js"></script>
+    <script src="/static/js/pixel-heatmap.js"></script>
+    
+
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">DeepHealth Cancer Prediction</a>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row" style="height: 950px">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar ">
+            <div class="sidebar-sticky pt-3">
+              <ul class="nav flex-column">
+                <li class="nav-item sidebar">
+                  <div class="sliders-wrapper">
+                    <span> opacity </span>
+                    <br>
+                    <input type="range" id="opacity" min="1" max="100" value="1"  step="1">
+                  </div>
+
+                  
+                </li>
+                <li>
+                  <div class="sliders-wrapper sidebar">
+                     threshold: <span id="th-value">0.7</span>
+                    <br>
+                    <input type="range" id="threshold" min="0" max="100" value="70"  step="1">
+                  </div>
+                </li>
+                <li class="nav-item sidebar">
+                  cancer probability
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td id="low-colorbar">0</td>
+                        <td>
+                          <canvas height="20px" width="100%" id="colorbar"/>
+                        </td>
+                        <td>
+                         1 
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </li>
+                <li>
+									draw
+                  <label class="switch">draw
+                    <input id="draw-checkbox" type="checkbox">
+                    <span class="slider round"></span>
+                  </label>  
+                </li>
+                <li>
+                  <button type="button" id="save-polygon">Save</button>
+                </li>
+              </ul>
+            </div>
+        </nav>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+          <div id="openseadragon1" ></div>
+        </main>
+      </div>
+    </div>
+
+  </body>
+</html>
